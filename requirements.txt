@@ -1,5 +1,0 @@
-aiogram
-asyncio
-datetime
-sqlalchemy
-xlrd
