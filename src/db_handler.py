@@ -44,11 +44,11 @@ class dbHandler():
                 break
             except exc.OperationalError as e:
                 print("update_sql()", e, "\nReconnection")
-                session().close()
+                session.close()
             except exc.IntegrityError as e:
                 print("update_sql() exc.IntegrityError \t", e)
-                session().rollback()
-                session().close()
+                session.rollback()
+                session.close()
             except exc.SQLAlchemyError as e:
                 print("update_sql() exc.SQLAlchemyError \t", e)
                 break
@@ -89,8 +89,8 @@ class dbHandler():
                 session.close()
             except exc.IntegrityError as e:
                 print("GET_INFO_MSG() exc.IntegrityError \t", e)
-                session().rollback()
-                session().close()
+                session.rollback()
+                session.close()
             except exc.SQLAlchemyError as e:
                 print("ERRR in GET_INFO_MSG!! exc.SQLAlchemyError \t", e)
                 return [None, False]
@@ -135,8 +135,8 @@ class dbHandler():
                 session.close()
             except exc.IntegrityError as e:
                 print("insert_sql() exc.IntegrityError \t", e)
-                session().rollback()
-                session().close()
+                session.rollback()
+                session.close()
             except exc.SQLAlchemyError as e:
                 print("insert_sql() exc.SQLAlchemyError \t", e)
                 break
@@ -161,8 +161,8 @@ class dbHandler():
                 session.close()
             except exc.IntegrityError as e:
                 print("upd_chat_rozklad() exc.IntegrityError \t", e)
-                session().rollback()
-                session().close()
+                session.rollback()
+                session.close()
             except exc.SQLAlchemyError as e:
                 print("upd_chat_rozklad() exc.SQLAlchemyError \t", e)
                 break
@@ -182,11 +182,11 @@ class dbHandler():
                 break
             except exc.OperationalError as e:
                 print("get_info_sql()", e, "\nReconnection")
-                session().close()
+                session.close()
             except exc.IntegrityError as e:
                 print("get_info_sql() exc.IntegrityError \t", e)
-                session().rollback()
-                session().close()
+                session.rollback()
+                session.close()
             except exc.SQLAlchemyError as e:
                 print("get_info_sql() exc.SQLAlchemyError \t", e)
                 return []
@@ -210,11 +210,11 @@ class dbHandler():
                 break
             except exc.OperationalError as e:
                 print("new_name_table()", e, "\nReconnection")
-                session().close()
+                session.close()
             except exc.IntegrityError as e:
                 print("new_name_table() exc.IntegrityError \t", e)
-                session().rollback()
-                session().close()
+                session.rollback()
+                session.close()
             except exc.SQLAlchemyError as e:
                 print("new_name_table() exc.SQLAlchemyError\t", e)
                 break
@@ -237,11 +237,11 @@ class dbHandler():
                 break
             except exc.OperationalError as e:
                 print("update_name_table()", e, "\nReconnection")
-                session().close()
+                session.close()
             except exc.IntegrityError as e:
                 print("update_name_table() exc.IntegrityError \t", e)
-                session().rollback()
-                session().close()
+                session.rollback()
+                session.close()
             except exc.SQLAlchemyError as e:
                 print("update_name_table() exc.SQLAlchemyError\t", e)
                 break
@@ -259,11 +259,11 @@ class dbHandler():
                 break
             except exc.OperationalError as e:
                 print("get_chatIds()", e, "\nReconnection")
-                session().close()
+                session.close()
             except exc.IntegrityError as e:
                 print("get_chatIds() exc.IntegrityError \t", e)
-                session().rollback()
-                session().close()
+                session.rollback()
+                session.close()
             except exc.SQLAlchemyError as e:
                 print("get_chatIds() exc.SQLAlchemyError\t", e)
                 return []
@@ -287,11 +287,11 @@ class dbHandler():
                 break
             except exc.OperationalError as e:
                 print("delete_chats()", e, "\nReconnection")
-                session().close()
+                session.close()
             except exc.IntegrityError as e:
                 print("delete_chats() exc.IntegrityError \t", e)
-                session().rollback()
-                session().close()
+                session.rollback()
+                session.close()
             except exc.SQLAlchemyError as e:
                 print("delete_chats() exc.SQLAlchemyError\t", e)
                 break
