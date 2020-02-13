@@ -1,0 +1,8 @@
+aiogram == 2.3
+datetime == 4.3
+json == 2.0.9
+pytz == 2018.7
+re == 2.2.1
+requests == 2.21.0
+sqlalchemy == 1.2.12
+xlrd == 1.1.0
