@@ -12,14 +12,14 @@ def get_key(d, value):
 class XlsHandler:
     def __init__(self, path, day_of_week):
         self.day_of_week = day_of_week
-        self.rb          = None
-        self.sheet       = None
+        self.rb = None
+        self.sheet = None
         self.merged_dict = None
         self.update(path)
 
     def update(self, path):
-        self.rb          = xlrd.open_workbook(path, formatting_info=True)
-        self.sheet       = self.rb.sheet_by_index(0)
+        self.rb = xlrd.open_workbook(path, formatting_info=True)
+        self.sheet = self.rb.sheet_by_index(0)
         self.merge_cells()
 
     ######################################################
@@ -54,6 +54,7 @@ class XlsHandler:
                     for i in range(2):
                         res[group_name][f"week: {i + 1}"] = dict()
                         j = 0
+                        les = 0
                         for row in range(4, sheet.nrows):
                             if (row - 4) % 15 == 0:
                                 j += 1
@@ -150,6 +151,7 @@ class XlsHandler:
         merged_dict = self.merged_dict
         res = dict()
         res[request] = dict()
+        value = str()
         for i in range(2):
             res[request][f"week: {i + 1}"] = dict()
             for j in range(1, 7):
@@ -256,7 +258,6 @@ class XlsHandler:
                 day_index,
                 week_index
             )
-
             day_temp = day_temp[:-1]
 
             # DELETING EMPTY LESSONS

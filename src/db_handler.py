@@ -14,11 +14,11 @@ class dbHandler():
         metadata.bind = self.engine
 
         Base = automap_base()
-        Base.prepare(self.engine, reflect = True)
+        Base.prepare(self.engine, reflect=True)
 
         self.chat_ids_orm = Base.classes.chat_ids
         self.name_table_orm = Base.classes.name_table
-        self.Session = sessionmaker(bind = self.engine)
+        self.Session = sessionmaker(bind=self.engine)
 
         print("Connection Established!")
 
@@ -123,9 +123,9 @@ class dbHandler():
             try:
                 session.add(
                     self.chat_ids_orm(
-                        chat_id = str(new_chat_id),
-                        admin = new_admin,
-                        username = new_username
+                        chat_id=str(new_chat_id),
+                        admin=new_admin,
+                        username=new_username
                     )
                 )
                 session.commit()
@@ -201,9 +201,9 @@ class dbHandler():
             try:
                 session.add(
                     self.name_table_orm(
-                        id = ids,
-                        username = username,
-                        name = str(name)
+                        id=ids,
+                        username=username,
+                        name=str(name)
                     )
                 )
                 session.commit()
