@@ -1,2 +1,5 @@
 src/__pycache__/
 config/config_secret.json
+data/*.log
+.idea/
+venv/
