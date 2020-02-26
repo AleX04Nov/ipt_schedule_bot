@@ -1,9 +1,9 @@
-import sys
 import pathlib
+import sys
+
 import aiogram
 
-from scheduleBot_Manager_TGAPI import ScheduleBotTGAPI \
-    as ScheduleBotManager
+from scheduleBot_Manager_TGAPI import ScheduleBotTGAPI as ScheduleBotManager
 
 curr_path = str(pathlib.Path(__file__).parent.absolute()) + "/"
 

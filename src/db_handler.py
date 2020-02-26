@@ -1,9 +1,10 @@
-from sqlalchemy import *
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.ext.automap import automap_base
-from sqlalchemy import exc
 import logging
 from logging.handlers import RotatingFileHandler
+
+from sqlalchemy import *
+from sqlalchemy import exc
+from sqlalchemy.ext.automap import automap_base
+from sqlalchemy.orm import sessionmaker
 
 
 class dbHandler():
@@ -15,11 +16,11 @@ class dbHandler():
             maxBytes=12 * 1024 * 1024,
             backupCount=2,
         )
-        format = logging.Formatter(
+        log_format = logging.Formatter(
             '%(asctime)s | %(levelname)-5s | %(message)s',
             datefmt='%d.%m.%Y | %H:%M:%S'
         )
-        hdlr.setFormatter(format)
+        hdlr.setFormatter(log_format)
         self.logger.addHandler(hdlr)
 
         metadata = MetaData()
@@ -96,6 +97,7 @@ class dbHandler():
                 ).filter(
                     self.chat_ids_orm.chat_id == chat_id
                 ).all()
+                session.close()
                 break
             except exc.OperationalError as e:
                 self.logger.error(f"GET_INFO_MSG() {e} | Reconnection")
@@ -107,10 +109,12 @@ class dbHandler():
             except exc.SQLAlchemyError as e:
                 self.logger.error(f"GET_INFO_MSG!! "
                                   f"exc.SQLAlchemyError \t{e}")
-                return [None, False]
+                session.close()
+                return None, False
             except Exception as e:
                 self.logger.error(f"GET_INFO_MSG \t{e}")
-                return [None, False]
+                session.close()
+                return None, False
 
         if len(s_rows1) == 0:
             self.new_name_table(user_id, username, nameofuser)
@@ -120,7 +124,7 @@ class dbHandler():
         chat_payload = chat_title if group_bool is True else username
         if len(s_rows2) == 0:
             self.insert_sql(chat_id, False, chat_payload)
-            return [None, False]
+            return None, False
         elif s_rows2[0][0] != chat_payload:
             self.update_sql(
                 chat_id,
@@ -129,7 +133,7 @@ class dbHandler():
                 chat_payload
             )
 
-        return [s_rows2[0][1], s_rows2[0][2]]
+        return s_rows2[0][1], s_rows2[0][2]
 
     def insert_sql(self, new_chat_id, new_admin, new_username):
         while True:
@@ -143,6 +147,7 @@ class dbHandler():
                     )
                 )
                 session.commit()
+                session.close()
                 break
             except exc.OperationalError as e:
                 self.logger.error(f"insert_sql() {e} | Reconnection")
@@ -153,9 +158,11 @@ class dbHandler():
                 session.close()
             except exc.SQLAlchemyError as e:
                 self.logger.error(f"insert_sql() exc.SQLAlchemyError \t{e}")
+                session.close()
                 break
             except Exception as e:
                 self.logger.error(f"insert_sql() \t{e}")
+                session.close()
                 break
 
     def upd_chat_rozklad(self, chat_id, group):
@@ -169,6 +176,7 @@ class dbHandler():
                 ).one()
                 quer.rozklad_group = group
                 session.commit()
+                session.close()
                 break
             except exc.OperationalError as e:
                 self.logger.error(f"upd_chat_rozklad() {e} | Reconnection")
@@ -181,9 +189,11 @@ class dbHandler():
             except exc.SQLAlchemyError as e:
                 self.logger.error(f"upd_chat_rozklad() "
                                   f"exc.SQLAlchemyError \t{e}")
+                session.close()
                 break
             except Exception as e:
                 self.logger.error(f"upd_chat_rozklad() \t{e}")
+                session.close()
                 break
 
     def get_info_sql(self, const_chat_id):
@@ -195,6 +205,7 @@ class dbHandler():
                 ).filter(
                     self.chat_ids_orm.chat_id == const_chat_id
                 ).all()
+                session.close()
                 break
             except exc.OperationalError as e:
                 self.logger.error(f"get_info_sql() {e} | Reconnection")
@@ -205,10 +216,12 @@ class dbHandler():
                 session.close()
             except exc.SQLAlchemyError as e:
                 self.logger.error(f"get_info_sql() exc.SQLAlchemyError \t{e}")
-                return []
+                session.close()
+                return ()
             except Exception as e:
                 self.logger.error(f"get_info_sql() \t{e}")
-                return []
+                session.close()
+                return ()
         return s_rows[0]
 
     def new_name_table(self, ids, username, name):
@@ -223,6 +236,7 @@ class dbHandler():
                     )
                 )
                 session.commit()
+                session.close()
                 break
             except exc.OperationalError as e:
                 self.logger.error(f"new_name_table() {e} | Reconnection")
@@ -234,9 +248,11 @@ class dbHandler():
             except exc.SQLAlchemyError as e:
                 self.logger.error(f"new_name_table() "
                                   f"exc.SQLAlchemyError \t{e}")
+                session.close()
                 break
             except Exception as e:
                 self.logger.error(f"new_name_table() \t {e}")
+                session.close()
                 break
 
     def update_name_table(self, ids, username, name):
@@ -251,6 +267,7 @@ class dbHandler():
                 quer.username = str(username)
                 quer.name = str(name)
                 session.commit()
+                session.close()
                 break
             except exc.OperationalError as e:
                 self.logger.error(f"update_name_table() {e} | Reconnection")
@@ -263,9 +280,11 @@ class dbHandler():
             except exc.SQLAlchemyError as e:
                 self.logger.error(f"update_name_table() "
                                   f"exc.SQLAlchemyError \t{e}")
+                session.close()
                 break
             except Exception as e:
                 self.logger.error(f"update_name_table() \t{e}")
+                session.close()
                 break
 
     def get_chatIds(self):
@@ -275,6 +294,7 @@ class dbHandler():
                 s_rows = session.query(
                     self.chat_ids_orm.chat_id
                 ).all()
+                session.close()
                 break
             except exc.OperationalError as e:
                 self.logger.error(f"get_chatIds() {e} | Reconnection")
@@ -285,10 +305,12 @@ class dbHandler():
                 session.close()
             except exc.SQLAlchemyError as e:
                 self.logger.error(f"get_chatIds() exc.SQLAlchemyError \t{e}")
-                return []
+                session.close()
+                return ()
             except Exception as e:
                 self.logger.error(f"get_chatIds() \t{e}")
-                return []
+                session.close()
+                return ()
         return s_rows
 
     # NEEDS FURTHER TESTING!!!!
@@ -300,9 +322,10 @@ class dbHandler():
                     self.chat_ids_orm
                 ).filter(
                     self.chat_ids_orm.chat_id.in_(deleted_chats),
-                    self.chat_ids_orm.rozklad_group == None
+                    self.chat_ids_orm.rozklad_group is None
                 ).delete()
                 session.commit()
+                session.close()
                 break
             except exc.OperationalError as e:
                 self.logger.error(f"delete_chats() {e} | Reconnection")
@@ -313,9 +336,11 @@ class dbHandler():
                 session.close()
             except exc.SQLAlchemyError as e:
                 self.logger.error(f"delete_chats() exc.SQLAlchemyError \t{e}")
+                session.close()
                 break
             except Exception as e:
                 self.logger.error(f"delete_chats() \t{e}")
+                session.close()
                 break
 
     ##############

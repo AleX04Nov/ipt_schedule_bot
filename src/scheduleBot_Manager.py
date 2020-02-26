@@ -1,10 +1,13 @@
-import re
-import requests
 import datetime
 import json
-import pytz
 import logging
+import re
+from datetime import timedelta
 from logging.handlers import RotatingFileHandler
+
+import pytz
+import requests
+
 from xls_handler import XlsHandler
 
 
@@ -53,11 +56,11 @@ class ScheduleBotManager:
             maxBytes=12 * 1024 * 1024,
             backupCount=2,
         )
-        format = logging.Formatter(
+        log_format = logging.Formatter(
             '%(asctime)s | %(levelname)-5s | %(message)s',
             datefmt='%d.%m.%Y | %H:%M:%S'
         )
-        hdlr.setFormatter(format)
+        hdlr.setFormatter(log_format)
         self.logger.addHandler(hdlr)
 
         return
@@ -86,16 +89,15 @@ class ScheduleBotManager:
             and the second one is a text with response
         """
         new_group = re.sub('[-]', '', new_group)
-        response = list()
         if self.xls.find_timetable(new_group, dict()) != dict():
-            response = [True, f"Група була змінена на {new_group}"]
+            response = True, f"Група була змінена на {new_group}"
         else:
-            response = [
+            response = (
                 False,
                 f"Група не була змінена на {new_group}. "
                 f"Мабуть, її немає в таблиці, чи була "
                 f"допущена помилка, під час її написання."
-            ]
+            )
         return response
 
     async def quick_help_response(self):
@@ -106,13 +108,15 @@ class ScheduleBotManager:
         :rtype: `str`
         """
         week_num = await self.get_current_week()
-        response_message = f"*Week: {week_num}* \n" \
-                           f"/today \t\U00002B50\n" \
-                           f"/tomorrow \t\U0001F449\n" \
-                           f"/week \t\U00002B50\n" \
-                           f"/nextweek \t\U0001F449\n" \
-                           f"/timetable \t\U0001F6A7\n" \
-                           f"/left"
+        response_message = (
+            f"*Week: {week_num}* \n"
+            f"/today \t⭐\n"
+            f"/tomorrow \t\👉\n"
+            f"/week \t\⭐\n"
+            f"/nextweek \t👉\n"
+            f"/timetable \t🚧\n"
+            f"/left"
+        )
         return response_message
 
     async def help_response(self, group):
@@ -126,24 +130,26 @@ class ScheduleBotManager:
         """
         week_num = await self.get_current_week()
 
-        response_message = f"*{group}*\n*Week: {week_num}*\n" \
-                           f"Команди:\n\n" \
-                           f"/today — розклад на сьогодні\n" \
-                           f"/tomorrow — розклад на завтра\n" \
-                           f"/week — розклад на поточний тиждень\n" \
-                           f"/nextweek — розклад на наступний тиждень\n" \
-                           f"/timetable — розклад кінця/початку пар\n\n" \
-                           f"/full — повний розклад на два тижні\n" \
-                           f"/left — дізнатися час до кінця пари\n" \
-                           f"/currentLesson — інформація про поточну пару\n" \
-                           f"/nextLesson — інформація про наступну пару\n\n" \
-                           f"/rozklad НАЗВАГРУПИ - змінити показ розкладу" \
-                           f"на іншу групу\n" \
-                           f"/find\_info ЗАПИТ — пошук пар, за запитом " \
-                           f"(кабінет, фамілія викладача, назва предмету," \
-                           f"тощо). Наприклад: `/find_info Яковлєв`\n\n" \
-                           f"/quickhelp — короткий список команд\n" \
-                           f"/help — показати це повідомлення \U0001F631"
+        response_message = (
+            f"*{group}*\n*Week: {week_num}*\n"
+            f"Команди:\n\n"
+            f"/today — розклад на сьогодні\n"
+            f"/tomorrow — розклад на завтра\n"
+            f"/week — розклад на поточний тиждень\n"
+            f"/nextweek — розклад на наступний тиждень\n"
+            f"/timetable — розклад кінця/початку пар\n\n"
+            f"/full — повний розклад на два тижні\n"
+            f"/left — дізнатися час до кінця пари\n"
+            f"/currentLesson — інформація про поточну пару\n"
+            f"/nextLesson — інформація про наступну пару\n\n"
+            f"/rozklad НАЗВАГРУПИ - змінити показ розкладу"
+            f"на іншу групу\n"
+            f"/find\_info ЗАПИТ — пошук пар, за запитом "
+            f"(кабінет, фамілія викладача, назва предмету,"
+            f"тощо). Наприклад: `/find_info Яковлєв`\n\n"
+            f"/quickhelp — короткий список команд\n"
+            f"/help — показати це повідомлення 😱"
+        )
         return response_message
 
     async def today_response(self, group, name):
@@ -169,19 +175,17 @@ class ScheduleBotManager:
             today_res = f"Сьогодні ж *НЕДІЛЯ*! {name}"
 
         else:
-            day_temp = self.xls.get_day_timetable(
+            is_empty, day_temp = self.xls.get_day_timetable(
                 group,
                 self.timetable,
                 weekday,
                 week_num
             )
 
-            # If there is any lesson in this day
-            # do if
-            if day_temp[0] is False:
-                today_res = day_temp[1]
+            if is_empty is False:
+                today_res = day_temp
             else:
-                today_res = day_temp[1]
+                today_res = day_temp
                 today_res += "\nСьогодні в тебе *нічого* немає, відпочивай"
 
         return today_res
@@ -198,8 +202,7 @@ class ScheduleBotManager:
         :return: text with today`s schedule
         :rtype: `str`
         """
-        tomorrow = datetime.datetime.now(self.MY_tz)
-        tomorrow += datetime.timedelta(days=1)
+        tomorrow = datetime.datetime.now(self.MY_tz) + timedelta(days=1)
         week_num = await self.get_current_week(tomorrow)
 
         weekday = tomorrow.weekday() + 1
@@ -210,19 +213,17 @@ class ScheduleBotManager:
             tomorrow_res = f"Завтра *НЕДІЛЯ*! {name}"
 
         else:
-            day_temp = self.xls.get_day_timetable(
+            is_empty, day_temp = self.xls.get_day_timetable(
                 group,
                 self.timetable,
                 weekday,
                 week_num
             )
 
-            # If there is any lesson in this day
-            # do if
-            if day_temp[0] is False:
-                tomorrow_res = day_temp[1]
+            if is_empty is False:
+                tomorrow_res = day_temp
             else:
-                tomorrow_res = day_temp[1]
+                tomorrow_res = day_temp
                 tomorrow_res += "\nЗавтра в тебе *нічого* не буде, відпочивай"
 
         return tomorrow_res
@@ -306,8 +307,10 @@ class ScheduleBotManager:
             result = f"Сьогодні ж *НЕДІЛЯ*! {name}"
             return result
 
-        result = f"Сьогодні пар більше не буде, бо вже вечір\n" \
-                 f"/nextlesson — покаже тобі інформацію про наступну пару"
+        result = (
+            f"Сьогодні пар більше не буде, бо вже вечір\n"
+            f"/nextlesson — покаже тобі інформацію про наступну пару"
+        )
 
         # Get time like string HH:MM:SS
         now = now.strftime('%X')
@@ -333,11 +336,13 @@ class ScheduleBotManager:
                     # length of the lesson is 95 minutes.
                     # if delta higher then 94 - there is still a break
                     if delta_minutes > 94:
-                        result = f"Зачекай, зараз немає пари. Мабуть, йде" \
-                                 f"перерва або все ще ранок, *{name}*, " \
-                                 f"відпочивай\n" \
-                                 f"/nextLesson — покаже тобі інформацію " \
-                                 f"про наступну пару"
+                        result = (
+                            f"Зачекай, зараз немає пари. Мабуть, йде"
+                            f"перерва або все ще ранок, *{name}*, "
+                            f"відпочивай\n"
+                            f"/nextLesson — покаже тобі інформацію "
+                            f"про наступну пару"
+                        )
                         return result
 
                     # else - get current lesson from xml
@@ -351,18 +356,22 @@ class ScheduleBotManager:
                     )
                     result = f"Наразі йде _{i + 1} пара_:\n"
                     result += curr_lesson
-                    result += f"\nДо кінця цієї пари: *{delta_minutes} хв " \
-                              f"{delta_seconds} сек*"
+                    result += (
+                        f"\nДо кінця цієї пари: *{delta_minutes} хв "
+                        f"{delta_seconds} сек*"
+                    )
                     if curr_lesson == '':
-                        result = f"Наразі йде _{i + 1} пара_:\n" \
-                                 f"Але у тебе на ній *нічого* немає :)\n" \
-                                 f"------------------------------\n" \
-                                 f"Час до кінця цієї пари: " \
-                                 f"*{delta_minutes} хв {delta_seconds} " \
-                                 f"сек*\n" \
-                                 f"------------------------------\n" \
-                                 f"/nextLesson — покаже тобі інформацію " \
-                                 f"про наступну пару"
+                        result = (
+                            f"Наразі йде _{i + 1} пара_:\n"
+                            f"Але у тебе на ній *нічого* немає :)\n"
+                            f"------------------------------\n"
+                            f"Час до кінця цієї пари: "
+                            f"*{delta_minutes} хв {delta_seconds} "
+                            f"сек*\n"
+                            f"------------------------------\n"
+                            f"/nextLesson — покаже тобі інформацію "
+                            f"про наступну пару"
+                        )
                     return result
         except Exception as e:
             # I give it 1/1000 that there will be an exception
@@ -409,12 +418,14 @@ class ScheduleBotManager:
                     )
                     tdelta = lesson_end_point - current_point
 
-                    # This 'if' stays for lessons, that will be
-                    # in a current day. Thus we have no need in
-                    # days and hours, but we need to count seconds.
-                    # Restrictions to lessons: need to chose the first one
-                    # end of which will come in more than 95 minutes.
-                    # do not count empty lessons
+                    """
+                    This 'if' stays for lessons, that will be
+                    in a current day. Thus we have no need in
+                    days and hours, but we need to count seconds.
+                    Restrictions to lessons: need to chose the first one
+                    end of which will come in more than 95 minutes.
+                    do not count empty lessons
+                    """
                     if add_days == 0:
                         if tdelta.days == 0:
                             delta_minutes = tdelta.seconds // 60
@@ -432,14 +443,18 @@ class ScheduleBotManager:
                                 continue
                             result = f"Наступна буде _{i + 1} пара_:\n"
                             result += next_lesson
-                            result += f"\nЧерез *{delta_minutes - 95} хв " \
-                                      f"{delta_seconds} сек*"
+                            result += (
+                                f"\nЧерез *{delta_minutes - 95} хв "
+                                f"{delta_seconds} сек*"
+                            )
                             return result
-                    # 'else' stays for lessons, that will be in some
-                    # next days (add_days). Also we have no need in seconds
-                    # but we need to count days and hours additionally
-                    # Restrictions to lessons: need to chose the first one.
-                    # do not count empty lessons
+                        """
+                        'else' stays for lessons, that will be in some
+                        next days (add_days). Also we have no need in seconds
+                        but we need to count days and hours additionally
+                        Restrictions to lessons: need to chose the first one.
+                        do not count empty lessons
+                        """
                     else:
                         delta_minutes = tdelta.seconds // 60 - 95
                         delta_hours = delta_minutes // 60 % 24
@@ -453,12 +468,16 @@ class ScheduleBotManager:
                         )
                         if next_lesson == '':
                             continue
-                        result = f"Наступна буде _{i + 1} пара_ в " \
-                                 f"*{self.day_of_week[str(weekday)]} " \
-                                 f"{week_num}*:\n"
+                        result = (
+                            f"Наступна буде _{i + 1} пара_ в "
+                            f"*{self.day_of_week[str(weekday)]} "
+                            f"{week_num}*:\n"
+                        )
                         result += next_lesson
-                        result += f"\nЧерез: *{tdelta.days + add_days} дн " \
-                                  f"{delta_hours} год {delta_minutes} хв*"
+                        result += (
+                            f"\nЧерез: *{tdelta.days + add_days} дн "
+                            f"{delta_hours} год {delta_minutes} хв*"
+                        )
                         return result
 
                 # check every single day one-by-one,
@@ -500,8 +519,10 @@ class ScheduleBotManager:
         """
         now = datetime.datetime.now(self.MY_tz)
 
-        left_result = f"Не можу порахувати час... \n*{name}*, " \
-                      f"а зараз точно йде пара?"
+        left_result = (
+            f"Не можу порахувати час... \n*{name}*, "
+            f"а зараз точно йде пара?"
+        )
 
         # Get time like string HH:MM:SS
         now = now.strftime('%X')
@@ -525,21 +546,27 @@ class ScheduleBotManager:
                     # length of the lesson is 95 minutes.
                     # if delta higher then 94 - there is still a break
                     if delta_minutes > 94:
-                        left_result = f"Перерва ще не закінчилася.\n" \
-                                      f"До початку наступної _({i + 1} пари)" \
-                                      f"_ залишилось: *{delta_minutes - 95} " \
-                                      f"хв {delta_seconds} сек*"
+                        left_result = (
+                            f"Перерва ще не закінчилася.\n"
+                            f"До початку наступної _({i + 1} пари)"
+                            f"_ залишилось: *{delta_minutes - 95} "
+                            f"хв {delta_seconds} сек*"
+                        )
                     else:
-                        left_result = f"До кінця {i + 1} " \
-                                      f"пари залишилось: *{delta_minutes} " \
-                                      f"хв {delta_seconds} сек*"
+                        left_result = (
+                            f"До кінця {i + 1} "
+                            f"пари залишилось: *{delta_minutes} "
+                            f"хв {delta_seconds} сек*"
+                        )
                     return left_result
         except Exception as e:
             # I give it 1/1000 that there will be an exception
             # but there still some chances, so...
             self.logger.error(e)
-            left_result = f"Не можу порахувати час... \n*{name}*, " \
-                          f"а зараз точно йде пара?"
+            left_result = (
+                f"Не можу порахувати час... \n*{name}*, "
+                f"а зараз точно йде пара?"
+            )
         return left_result
 
     async def find_info_response(self, info_request):
@@ -577,29 +604,39 @@ class ScheduleBotManager:
         :return: list, where first elem is succession `bool`,
             and the second one is response_message `str`
         """
+        if not url:
+            response_message = "URL error"
+            return False, response_message
+
         request = requests.get(url)
         req_code = request.status_code
         req_type = request.headers["Content-Type"]
 
         # Check if request and type are OK
-        if req_code == 200 and req_type == "application/vnd.ms-excel":
-            with open(
-                    f"../{self.folder}/{self.filename}",
-                    'wb'
-            ) as update_file:
-                update_file.write(request.content)
-            self.timetable.clear()
-            self.xls.update(f"{self.curr_path}../"
-                            f"{self.folder}/{self.filename}")
-            response_message = f"<b>Увага!</b>\n" \
-                               f"Розклад було оновлено.\n" \
-                               f"<a href=\"{url}\">" \
-                               f"Посилання на новий файл</a>"
-            return [True, response_message]
-        else:
-            response_message = f"URL error (not 200 code or wrong type" \
-                               f" must be: \"application/vnd.ms-excel\")"
-            return [False, response_message]
+        if not (req_code == 200 and req_type == "application/vnd.ms-excel"):
+            response_message = (
+                f"URL error (not 200 code or wrong type"
+                f" must be: \"application/vnd.ms-excel\")"
+            )
+            return False, response_message
+
+        with open(
+                f"../{self.folder}/{self.filename}",
+                'wb'
+        ) as update_file:
+            update_file.write(request.content)
+        self.timetable.clear()
+        self.xls.update(
+            f"{self.curr_path}../"
+            f"{self.folder}/{self.filename}"
+        )
+        response_message = (
+            f"<b>Увага!</b>\n"
+            f"Розклад було оновлено.\n"
+            f"<a href=\"{url}\">"
+            f"Посилання на новий файл</a>"
+        )
+        return True, response_message
 
     # Additional Functions:
 
